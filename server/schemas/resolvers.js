@@ -1,10 +1,16 @@
 const { User, Book } = require('../models')
 const { signToken } = require('../utils/auth')
 const { AuthenticationError } = require('apollo-server-express');
-const { sign } = require('jsonwebtoken');
 
 const resolvers = {
   Query: {
+    me: async (parent, args, context) => {
+      if(context.user) {
+        const userData = await User.findOne({ _id: context.user._id })
+          .select('-__v -password')
+          .populate('savedBooks')
+      }
+    },
     user: async (parent, { username }) => {
       return User.findOne({ username })
         .select('-__v -password')
@@ -46,7 +52,7 @@ const resolvers = {
         return updatedUser
       }
     },
-    deleteBook: async (parent, {bookId}, context) => {
+    removeBook: async (parent, {bookId}, context) => {
       if(context.user) {
         const updatedUser = await User.findOneAndUpdate(
           { _id: context.user._id },
